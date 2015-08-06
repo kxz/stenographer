@@ -20,11 +20,12 @@ __ https://github.com/kxz/omnipresence
 Basic usage, in case the warning above wasn't scary enough::
 
     from stenographer import CassetteAgent
+    from twisted.internet import reactor
     from twisted.web.client import Agent, RedirectAgent
 
     # Use CassetteAgent to wrap the innermost agent object.  In most
     # cases, this will be the basic Agent in twisted.web.client.
-    cassette_agent = CassetteAgent(Agent(), 'cassette_path.json')
+    cassette_agent = CassetteAgent(Agent(reactor), 'cassette_path.json')
     agent = RedirectAgent(cassette_agent)
     deferred = agent.request('GET', 'http://www.example.com/')
     # Don't forget to add a save callback to the response Deferred.
