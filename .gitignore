@@ -1,6 +1,16 @@
 *.py[co]
 .DS_Store
 
+# Twisted
+_trial_temp
+
+# tox
+.tox
+
+# coverage
+.coverage
+htmlcov
+
 # Packages
 *.egg
 *.egg-info

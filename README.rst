@@ -29,4 +29,4 @@ Basic usage, in case the warning above wasn't scary enough::
     agent = RedirectAgent(cassette_agent)
     deferred = agent.request('GET', 'http://www.example.com/')
     # Don't forget to add a save callback to the response Deferred.
-    cassette_agent.save_after(deferred)
+    deferred.addCallback(cassette_agent.save)
