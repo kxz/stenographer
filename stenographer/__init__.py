@@ -4,4 +4,4 @@
 from .agent import CassetteAgent
 
 
-__version__ = '0.1-dev'
+__version__ = '0.1'

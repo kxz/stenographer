@@ -12,7 +12,7 @@ __ https://betamax.readthedocs.org/
 **Stenographer is not production-ready software.**
 It's currently composed mostly of bits hacked out of `Omnipresence`__'s
 test helpers, is nowhere near feature parity with VCR, and ironically
-doesn't have any tests of its own.
+doesn't have a comprehensive test suite.
 Improvements are welcome.
 
 __ https://github.com/kxz/omnipresence

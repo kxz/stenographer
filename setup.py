@@ -5,9 +5,9 @@ from setuptools import setup, find_packages
 setup(
     name='stenographer',
     description='An HTTP interaction recorder for Twisted Web',
-    version='0.1-dev',
+    version='0.1',
     author='Kevin Xiwei Zheng',
-    author_email='blankplacement+stenographer@gmail.com',
+    author_email='kxz+stenographer@room208.org',
     url='https://github.com/kxz/stenographer',
     license='X11',
     classifiers=[
@@ -22,5 +22,8 @@ setup(
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Software Development :: Testing'],
     packages=find_packages(),
+    package_data={
+        'stenographer': [
+            'test/fixtures/cassettes/*']},
     install_requires=[
         'Twisted>=14.0.0'])
