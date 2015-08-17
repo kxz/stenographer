@@ -2,18 +2,14 @@
 # pylint: disable=missing-docstring,too-few-public-methods
 
 
-import json
-
 from twisted.trial.unittest import TestCase
-from twisted.web.test.test_agent import (AgentTestsMixin,
-                                         FakeReactorAndConnectMixin)
+from twisted.web.test.test_agent import FakeReactorAndConnectMixin
 
 from ..agent import CassetteAgent
-from ..cassette import Cassette
 from .helpers import cassette_path
 
 
-class CassetteAgentTestCase(TestCase, FakeReactorAndConnectMixin):
+class CassetteAgentTestCase(FakeReactorAndConnectMixin, TestCase):
     def setUp(self):
         self.reactor = self.Reactor()
         self.agent = self.buildAgentForWrapperTest(self.reactor)
@@ -34,4 +30,5 @@ class CassetteAgentTestCase(TestCase, FakeReactorAndConnectMixin):
 
     def test_saved_mismatch(self):
         agent = CassetteAgent(self.agent, cassette_path('room208'))
-        self.assertRaises(IOError, agent.request, 'GET', 'http://foo.test/')
+        finished = agent.request('GET', 'http://foo.test/')
+        return self.assertFailure(finished, IOError)
