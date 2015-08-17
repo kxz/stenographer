@@ -79,10 +79,15 @@ class Cassette(Sequence):
     def as_dict(self):
         """Return a dictionary representation of this cassette, suitable
         for serializing in JSON or YAML format."""
+        # FIXME:  This won't work for future implementations of record
+        # modes that append to existing cassettes, because the structure
+        # of an actual response and a replayed one are different.
         from . import __version__  # avoid circular imports
         http_interactions = []
         for response in self.responses:
-            request = response.request
+            # `Response.construct` wraps the original request in a proxy
+            # for `IClientRequest`, so we have to fish it out.
+            request = response.request.original
             if request.bodyProducer is None:
                 request_body = {'encoding': 'utf-8', 'string': ''}
             else:
@@ -99,7 +104,7 @@ class Cassette(Sequence):
                     'status': {'code': response.code,
                                'message': response.phrase},
                     'body': body_as_dict(response.value(), response.headers),
-                    'headers': headers_as_dict(headers)},
+                    'headers': headers_as_dict(response.headers)},
                 'recorded_at': formatdate()})
-        return {'http_interactions': cassette.responses,
+        return {'http_interactions': http_interactions,
                 'recorded_with': 'Stenographer {}'.format(__version__)}

@@ -30,15 +30,21 @@ class CassetteAgent(object):
         else:
             self.recording = False
 
-    def request(self, *args, **kwargs):
+    @inlineCallbacks
+    def request(self, method, uri, headers=None, bodyProducer=None):
         """Replay a recorded HTTP request, or make and record an actual
         request if no recording exists."""
         if not self.recording:
-            return self.replay_request(*args, **kwargs)
-        finished = self.agent.request(*args, **kwargs)
-        finished.addCallback(RecordingResponse)  # wrap the response
-        finished.addCallback(self.cassette.responses.append)
-        return finished
+            response = yield self.replay_request(
+                method, uri, headers, bodyProducer)
+            returnValue(response)
+        if bodyProducer is not None:
+            bodyProducer = RecordingBodyProducer(bodyProducer)
+        real_response = yield self.agent.request(
+            method, uri, headers, bodyProducer)
+        response = RecordingResponse(real_response)
+        self.cassette.responses.append(response)
+        returnValue(response)
 
     def replay_request(self, method, uri, headers=None, bodyProducer=None):
         """Replay a recorded HTTP request.  Raise `IOError` if the
@@ -51,7 +57,7 @@ class CassetteAgent(object):
                           'request for {}'.format(method, uri))
         self.index += 1
         if not (method == response.request.method and
-                    uri == response.request.absoluteURI):
+                uri == response.request.absoluteURI):
             raise IOError(
                 'current {} request for {} differs from saved {} '
                 'request for {}'.format(method, uri,
@@ -63,5 +69,5 @@ class CassetteAgent(object):
         """Record interactions in this agent's cassette path."""
         if self.recording:
             with open(self.cassette_path, 'w') as cassette_file:
-                json.dump(self.cassette, cassette_file)
+                json.dump(self.cassette.as_dict(), cassette_file)
         return deferred_result
