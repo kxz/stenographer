@@ -12,8 +12,8 @@ from .helpers import cassette_path
 
 class CassetteLoadTestCase(TestCase):
     def test_room208(self):
-        with open(cassette_path('room208')) as f:
-            cassette = Cassette.from_dict(json.load(f))
+        with open(cassette_path('room208')) as cassette_file:
+            cassette = Cassette.from_dict(json.load(cassette_file))
         self.assertEqual(len(cassette), 2)
         self.assertEqual(cassette[0].request.method, 'GET')
         self.assertEqual(cassette[0].request.absoluteURI,

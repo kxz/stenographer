@@ -32,6 +32,7 @@ class RecordingBodyProducer(proxyForInterface(IBodyProducer)):
         self.consumer = None
 
     def startProducing(self, consumer):
+        """See `IBodyProducer.startProducing`."""
         self.consumer = RecordingConsumer(consumer)
         return self.original.startProducing(self.consumer)
 

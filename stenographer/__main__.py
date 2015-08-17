@@ -24,6 +24,7 @@ def save_and_exit(responses, cassette_agent):
 
 
 def fail_and_exit(failure):
+    """Print a failure message and stop the reactor."""
     failure.printTraceback()
     reactor.stop()
 

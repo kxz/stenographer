@@ -13,6 +13,8 @@ from twisted.web.http_headers import Headers
 from twisted.web._newclient import Request, Response
 from twisted.web.test.test_agent import AbortableStringTransport
 
+from .__version__ import __version__
+
 
 def body_from_dict(dct):
     """Decode and return a body string from a VCR request or response
@@ -27,7 +29,7 @@ def body_as_dict(string, headers=None):
     """Encode a body string into a VCR body dict and return it,
     according to the given HTTP headers."""
     body = {'encoding': 'utf-8'}
-    if (headers and 'gzip' in headers.getRawHeaders('content-encoding', [])):
+    if headers and 'gzip' in headers.getRawHeaders('content-encoding', []):
         body['base64_string'] = b64encode(string)
     else:
         body['string'] = string
@@ -82,7 +84,6 @@ class Cassette(Sequence):
         # FIXME:  This won't work for future implementations of record
         # modes that append to existing cassettes, because the structure
         # of an actual response and a replayed one are different.
-        from . import __version__  # avoid circular imports
         http_interactions = []
         for response in self.responses:
             # `Response.construct` wraps the original request in a proxy
