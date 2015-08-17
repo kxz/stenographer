@@ -6,6 +6,7 @@ from io import BytesIO
 
 from twisted.internet.interfaces import IConsumer, IProtocol
 from twisted.python.components import proxyForInterface
+from twisted.web.client import FileBodyProducer
 from twisted.web.iweb import IBodyProducer, IResponse
 
 
@@ -75,3 +76,43 @@ class RecordingResponse(proxyForInterface(IResponse)):
         if self.protocol is None:
             raise ValueError('response body not yet delivered')
         return self.protocol.io.getvalue()
+
+
+class IsolatingResponse(proxyForInterface(IResponse)):
+    """An `IResponse` implementation that wraps another and presents
+    copies of its mutable attributes, preserving the original values.
+    """
+
+    def __init__(self, original):
+        self.original = original
+        self._headers = original.headers.copy()
+
+    @property
+    def headers(self):
+        return self._headers
+
+
+class SavedBodyProducer(FileBodyProducer):
+    """An `IBodyProducer` that returns a predetermined byte string."""
+
+    def __init__(self, value):
+        self._value = value
+        FileBodyProducer.__init__(self, BytesIO(value))
+
+    def value(self):
+        """Return the byte string this producer was initialized with."""
+        return self._value
+
+
+class SavedResponse(proxyForInterface(IResponse)):
+    """An `IResponse` that returns a predetermined byte string."""
+
+    def __init__(self, original, value):
+        self.original = original
+        self._value = value
+        self.original._bodyDataReceived(value)
+        self.original._bodyDataFinished()
+
+    def value(self):
+        """Return the byte string this response was initialized with."""
+        return self._value

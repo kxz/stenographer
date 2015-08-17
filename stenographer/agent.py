@@ -7,7 +7,7 @@ import json
 from twisted.internet.defer import succeed, inlineCallbacks, returnValue
 
 from .cassette import Cassette
-from .proxy import RecordingBodyProducer, RecordingResponse
+from .proxy import RecordingBodyProducer, RecordingResponse, IsolatingResponse
 
 
 class CassetteAgent(object):
@@ -44,7 +44,9 @@ class CassetteAgent(object):
             method, uri, headers, bodyProducer)
         response = RecordingResponse(real_response)
         self.cassette.responses.append(response)
-        returnValue(response)
+        # We have to do this because ContentDecoderAgent mutates the
+        # response headers.  I don't like it, but them's the breaks.
+        returnValue(IsolatingResponse(response))
 
     def replay_request(self, method, uri, headers=None, bodyProducer=None):
         """Replay a recorded HTTP request.  Raise `IOError` if the

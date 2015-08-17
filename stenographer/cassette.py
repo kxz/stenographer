@@ -5,14 +5,14 @@
 from collections import Sequence
 from base64 import b64encode, b64decode
 from email.utils import formatdate
-from io import BytesIO
 from urlparse import urlparse, urlunparse
 
-from twisted.web.client import FileBodyProducer, URI
+from twisted.web.client import URI
 from twisted.web.http_headers import Headers
 from twisted.web._newclient import Request, Response
 from twisted.web.test.test_agent import AbortableStringTransport
 
+from .proxy import SavedBodyProducer, SavedResponse
 from .__version__ import __version__
 
 
@@ -61,15 +61,14 @@ class Cassette(Sequence):
             relative_uri = urlunparse(('', '') + urlparse(rq['uri'])[2:])
             request = Request._construct(
                 rq['method'], relative_uri, Headers(rq['headers']),
-                FileBodyProducer(BytesIO(body_from_dict(rq))),
+                SavedBodyProducer(body_from_dict(rq)),
                 False, URI.fromBytes(rq['uri'].encode('utf-8')))
             rp = interaction['response']
             response = Response._construct(
                 ('HTTP', 1, 1), rp['status']['code'], rp['status']['message'],
                 Headers(rp['headers']), AbortableStringTransport(), request)
-            response._bodyDataReceived(body_from_dict(rp))
-            response._bodyDataFinished()
-            cassette.responses.append(response)
+            cassette.responses.append(
+                SavedResponse(response, body_from_dict(rp)))
         return cassette
 
     def __getitem__(self, index):
@@ -81,13 +80,10 @@ class Cassette(Sequence):
     def as_dict(self):
         """Return a dictionary representation of this cassette, suitable
         for serializing in JSON or YAML format."""
-        # FIXME:  This won't work for future implementations of record
-        # modes that append to existing cassettes, because the structure
-        # of an actual response and a replayed one are different.
         http_interactions = []
         for response in self.responses:
-            # `Response.construct` wraps the original request in a proxy
-            # for `IClientRequest`, so we have to fish it out.
+            # `Response._construct` wraps the original request in a
+            # proxy for `IClientRequest`, so we have to fish it out.
             request = response.request.original
             if request.bodyProducer is None:
                 request_body = {'encoding': 'utf-8', 'string': ''}

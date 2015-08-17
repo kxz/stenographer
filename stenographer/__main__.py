@@ -18,14 +18,16 @@ def save_and_exit(responses, cassette_agent):
     """Save the cassette and stop the reactor."""
     for success, response in responses:
         if success:
-            yield readBody(response)
+            while response:
+                yield readBody(response)
+                response = response.previousResponse
     cassette_agent.save()
     reactor.stop()
 
 
 def fail_and_exit(failure):
     """Print a failure message and stop the reactor."""
-    failure.printTraceback()
+    failure.printTraceback(file=sys.stderr)
     reactor.stop()
 
 

@@ -25,3 +25,16 @@ class CassetteLoadTestCase(TestCase):
                          'https://room208.org/')
         self.assertEqual(cassette[1].code, 200)
         self.assertEqual(cassette[1].phrase, 'OK')
+
+
+class CassetteRoundTripTestCase(TestCase):
+    def test_room208(self):
+        with open(cassette_path('room208')) as cassette_file:
+            serialized = json.load(cassette_file)
+        cassette = Cassette.from_dict(serialized)
+        reserialized = cassette.as_dict()
+        for dct in (serialized, reserialized):
+            del dct['recorded_with']
+            for http_interaction in dct['http_interactions']:
+                del http_interaction['recorded_at']
+        self.assertEqual(serialized, reserialized)
