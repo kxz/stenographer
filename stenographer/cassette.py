@@ -9,6 +9,7 @@ from urlparse import urlparse, urlunparse
 
 from twisted.web.client import URI
 from twisted.web.http_headers import Headers
+from twisted.web.iweb import UNKNOWN_LENGTH
 from twisted.web._newclient import Request, Response
 from twisted.web.test.test_agent import AbortableStringTransport
 
@@ -90,6 +91,11 @@ class Cassette(Sequence):
             else:
                 request_body = body_as_dict(request.bodyProducer.value(),
                                             request.headers)
+            # Twisted also eats any "Content-Length" header provided to
+            # us, so we have to reconstruct it if it's present.
+            if response.length is not UNKNOWN_LENGTH:
+                response.headers.setRawHeaders('Content-Length',
+                                               [response.length])
             http_interactions.append({
                 'request': {
                     'method': request.method,
