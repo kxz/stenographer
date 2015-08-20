@@ -68,6 +68,12 @@ class Cassette(Sequence):
             response = Response._construct(
                 ('HTTP', 1, 1), rp['status']['code'], rp['status']['message'],
                 Headers(rp['headers']), AbortableStringTransport(), request)
+            content_length = response.headers.getRawHeaders('Content-Length')
+            if content_length:
+                try:
+                    response.length = int(content_length[0])
+                except ValueError:
+                    pass
             cassette.responses.append(
                 SavedResponse(response, body_from_dict(rp)))
         return cassette
