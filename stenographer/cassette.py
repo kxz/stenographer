@@ -26,11 +26,13 @@ def body_from_dict(dct):
     return body['string'].encode(body['encoding'])
 
 
-def body_as_dict(string, headers=None):
+def body_as_dict(string, headers=None, preserve_exact_body_bytes=False):
     """Encode a body string into a VCR body dict and return it,
     according to the given HTTP headers."""
     body = {'encoding': 'utf-8'}
-    if headers and 'gzip' in headers.getRawHeaders('content-encoding', []):
+    gzip_encoded = (
+        headers and 'gzip' in headers.getRawHeaders('Content-Encoding', []))
+    if preserve_exact_body_bytes or gzip_encoded:
         body['base64_string'] = b64encode(string)
     else:
         body['string'] = string
@@ -84,7 +86,7 @@ class Cassette(Sequence):
     def __len__(self):
         return len(self.responses)
 
-    def as_dict(self):
+    def as_dict(self, preserve_exact_body_bytes=False):
         """Return a dictionary representation of this cassette, suitable
         for serializing in JSON or YAML format."""
         http_interactions = []
@@ -95,8 +97,9 @@ class Cassette(Sequence):
             if request.bodyProducer is None:
                 request_body = {'encoding': 'utf-8', 'string': ''}
             else:
-                request_body = body_as_dict(request.bodyProducer.value(),
-                                            request.headers)
+                request_body = body_as_dict(
+                    request.bodyProducer.value(), request.headers,
+                    preserve_exact_body_bytes)
             # Twisted also eats any "Content-Length" header provided to
             # us, so we have to reconstruct it if it's present.
             if response.length is not UNKNOWN_LENGTH:
@@ -112,7 +115,8 @@ class Cassette(Sequence):
                     'http_version': '1.1',  # only one Twisted Web supports
                     'status': {'code': response.code,
                                'message': response.phrase},
-                    'body': body_as_dict(response.value(), response.headers),
+                    'body': body_as_dict(response.value(), response.headers,
+                                         preserve_exact_body_bytes),
                     'headers': headers_as_dict(response.headers)},
                 'recorded_at': formatdate()})
         return {'http_interactions': http_interactions,

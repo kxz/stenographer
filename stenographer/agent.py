@@ -15,10 +15,11 @@ class CassetteAgent(object):
     a recorded HTTP response in JSON-serialized VCR cassette format, or
     records a new cassette if none exists."""
 
-    def __init__(self, agent, cassette_path):
+    def __init__(self, agent, cassette_path, preserve_exact_body_bytes=False):
         self.agent = agent
         self.recording = True
         self.cassette_path = cassette_path
+        self.preserve_exact_body_bytes = preserve_exact_body_bytes
         self.index = 0
         try:
             with open(self.cassette_path) as cassette_file:
@@ -71,5 +72,6 @@ class CassetteAgent(object):
         """Record interactions in this agent's cassette path."""
         if self.recording:
             with open(self.cassette_path, 'w') as cassette_file:
-                json.dump(self.cassette.as_dict(), cassette_file)
+                dct = self.cassette.as_dict(self.preserve_exact_body_bytes)
+                json.dump(dct, cassette_file)
         return deferred_result
