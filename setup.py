@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 setup(
     name='stenographer',
     description='An HTTP interaction recorder for Twisted Web',
-    version='0.1.1',
+    version='0.1.2',
     author='Kevin Xiwei Zheng',
     author_email='kxz+stenographer@room208.org',
     url='https://github.com/kxz/stenographer',
