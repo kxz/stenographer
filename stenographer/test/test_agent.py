@@ -2,8 +2,13 @@
 # pylint: disable=missing-docstring,too-few-public-methods
 
 
+import sys
+
+from twisted.python.failure import Failure
 from twisted.trial.unittest import TestCase
-from twisted.web.test.test_agent import FakeReactorAndConnectMixin
+from twisted.web.client import Headers, Response, ResponseDone, readBody
+from twisted.web.test.test_agent import (AbortableStringTransport,
+                                         FakeReactorAndConnectMixin)
 
 from ..agent import CassetteAgent
 from .helpers import cassette_path
@@ -32,3 +37,40 @@ class CassetteAgentTestCase(FakeReactorAndConnectMixin, TestCase):
         agent = CassetteAgent(self.agent, cassette_path('room208'))
         finished = agent.request('GET', 'http://foo.test/')
         return self.assertFailure(finished, IOError)
+
+    def test_content_length_known(self):
+        agent = CassetteAgent(self.agent, '')
+        finished = agent.request('GET', 'http://foo.test/')
+        request, result = self.protocol.requests.pop()
+        response = Response._construct(('HTTP', 1, 1), 200, 'OK', Headers(),
+                                       AbortableStringTransport(), request)
+        response.length = 9001
+        response._bodyDataFinished()
+        result.callback(response)
+        finished.addCallback(readBody)
+        def assert_correct_length(deferred_result):
+            interaction = agent.cassette.as_dict()['http_interactions'][0]
+            self.assertItemsEqual(
+                [response.length],
+                interaction['response']['headers']['Content-Length'])
+            return deferred_result
+        finished.addCallback(assert_correct_length)
+        return finished
+
+    def test_content_length_unknown(self):
+        agent = CassetteAgent(self.agent, '')
+        finished = agent.request('GET', 'http://foo.test/')
+        request, result = self.protocol.requests.pop()
+        response = Response._construct(('HTTP', 1, 1), 200, 'OK', Headers(),
+                                       AbortableStringTransport(), request)
+        response._bodyDataFinished()
+        result.callback(response)
+        finished.addCallback(readBody)
+        def assert_length_absent(deferred_result):
+            interaction = agent.cassette.as_dict()['http_interactions'][0]
+            self.assertItemsEqual(
+                [],
+                interaction['response']['headers'].get('Content-Length', []))
+            return deferred_result
+        finished.addCallback(assert_length_absent)
+        return finished

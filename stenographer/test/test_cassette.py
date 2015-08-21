@@ -5,6 +5,7 @@
 import json
 
 from twisted.trial.unittest import TestCase
+from twisted.web.iweb import UNKNOWN_LENGTH
 
 from ..cassette import Cassette
 from .helpers import cassette_path
@@ -20,11 +21,13 @@ class CassetteLoadTestCase(TestCase):
                          'http://room208.org/')
         self.assertEqual(cassette[0].code, 301)
         self.assertEqual(cassette[0].phrase, 'Moved Permanently')
+        self.assertEqual(cassette[0].length, 178)
         self.assertEqual(cassette[1].request.method, 'GET')
         self.assertEqual(cassette[1].request.absoluteURI,
                          'https://room208.org/')
         self.assertEqual(cassette[1].code, 200)
         self.assertEqual(cassette[1].phrase, 'OK')
+        self.assertEqual(cassette[1].length, UNKNOWN_LENGTH)
 
 
 class CassetteRoundTripTestCase(TestCase):
