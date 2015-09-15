@@ -80,7 +80,7 @@ class CassetteAgentTestCase(FakeReactorAndConnectMixin, TestCase):
         finished = agent.request('GET', 'http://foo.test/')
         request, result = self.protocol.requests.pop()
         headers = Headers()
-        headers.addRawHeader('Content-Encoding', ['gzip'])
+        headers.addRawHeader('Content-Encoding', 'gzip')
         response = Response._construct(('HTTP', 1, 1), 200, 'OK', headers,
                                        AbortableStringTransport(), request)
         response._bodyDataFinished()
@@ -88,11 +88,11 @@ class CassetteAgentTestCase(FakeReactorAndConnectMixin, TestCase):
         @inlineCallbacks
         def assert_intact_headers(agent_response):
             yield readBody(agent_response)
-            response.headers.removeHeader('Content-Encoding')
+            agent_response.headers.removeHeader('Content-Encoding')
             interaction = agent.cassette.as_dict()['http_interactions'][0]
             self.assertEqual(
                 ['gzip'],
                 interaction['response']['headers']['Content-Encoding'])
             returnValue(agent_response)
-        finished.addCallback(readBody)
+        finished.addCallback(assert_intact_headers)
         return finished
